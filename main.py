@@ -473,14 +473,14 @@ async def error_handler(update: ContextTypes.DEFAULT_TYPE, context: ContextTypes
     print(f"Update {update} caused error {context.error}")
     # Optionally, you can send a message to the user or a developer group if critical errors occur
 
-async def webhook_handler(request: web.Request) -> web.Response: # <---- FUNGSI WEBHOOK HANDLER BARU!
-    """Set route /telegram to receive updates."""
-    update = telegram.Update.de_json(data=await request.json(), bot=application.bot)
-    await application.process_update(update)
-    return web.Response()
+# async def webhook_handler(request: web.Request) -> web.Response: # <---- FUNGSI WEBHOOK HANDLER BARU!
+#     """Set route /telegram to receive updates."""
+#     update = telegram.Update.de_json(data=await request.json(), bot=application.bot)
+#     await application.process_update(update)
+#     return web.Response()
 
 # --- 6. Main Function ---
-async def main() -> None:
+def main() -> None:
     """Start the bot and setup database."""
     create_database_and_table() # <----- PANGGIL FUNGSI CREATE DATABASE DI MAIN()
     global application
@@ -504,18 +504,39 @@ async def main() -> None:
     # Start the Bot
     # application.run_polling(allowed_updates=telegram.Update.ALL_TYPES) # Specify allowed_updates for clarity
     
-    # --- JALANKAN BOT DENGAN WEBHOOK DI VERCEL! ---
-    print("Bot berjalan dalam mode Webhook di Vercel!") # Log info webhook mode
-    global app
-    app = web.Application() # <----- PAKE web.Application()
-    app.router.add_post("/telegram", webhook_handler) # <---- DAFTAR PATH /TELEGRAM BUAT WEBHOOK
-    runner = web.AppRunner(app) # <----- PAKE web.AppRunner()
-    await runner.setup() # <----- AWAIT runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port=int(os.environ.get("PORT", 8080))) # <----- PAKE web.TCPSite()
-    await site.start() # <----- AWAIT site.start()
-    await asyncio.Event().wait() # Keep app running
+    # # --- JALANKAN BOT DENGAN WEBHOOK DI VERCEL! ---
+    # print("Bot berjalan dalam mode Webhook di Vercel!") # Log info webhook mode
+    # global app
+    # app = web.Application() # <----- PAKE web.Application()
+    # app.router.add_post("/telegram", webhook_handler) # <---- DAFTAR PATH /TELEGRAM BUAT WEBHOOK
+    # runner = web.AppRunner(app) # <----- PAKE web.AppRunner()
+    # await runner.setup() # <----- AWAIT runner.setup()
+    # site = web.TCPSite(runner, "0.0.0.0", port=int(os.environ.get("PORT", 8080))) # <----- PAKE web.TCPSite()
+    # await site.start() # <----- AWAIT site.start()
+    # await asyncio.Event().wait() # Keep app running
+
+    WEBHOOK_URL = "https://kopiwraiting-bot-webhook.vercel.app/"
+    # --- JALANKAN BOT DENGAN WEBHOOK SECARA LOKAL! ---
+    # print("Bot berjalan dalam mode Webhook LOKAL!") # Info mode lokal
+    webhook_path = TELEGRAM_BOT_TOKEN
+    full_webhook_url = f"{WEBHOOK_URL}/{webhook_path}"
+    # logger.info(f"Mendaftarkan webhook di: {full_webhook_url}")
+    
+    # Jalankan webhook
+    # Parameter:
+    # - listen: alamat IP lokal yang didengarkan (misalnya 0.0.0.0)
+    # - port: port untuk menerima koneksi (misalnya 8443 atau sesuai dengan variabel lingkungan PORT)
+    # - url_path: path pada URL webhook (disini menggunakan token bot)
+    # - webhook_url: URL publik lengkap yang akan didaftarkan ke Telegram
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", "8443")),
+        url_path=webhook_path,
+        webhook_url=full_webhook_url,
+        allowed_updates=telegram.Update.ALL_TYPES
+    )
 
 
 if __name__ == "__main__":
-    # main()
-    asyncio.run(main())
+    main()
+    # asyncio.run(main())
