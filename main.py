@@ -506,6 +506,7 @@ async def main() -> None:
     
     # --- JALANKAN BOT DENGAN WEBHOOK DI VERCEL! ---
     print("Bot berjalan dalam mode Webhook di Vercel!") # Log info webhook mode
+    global app
     app = web.Application() # <----- PAKE web.Application()
     app.router.add_post("/telegram", webhook_handler) # <---- DAFTAR PATH /TELEGRAM BUAT WEBHOOK
     runner = web.AppRunner(app) # <----- PAKE web.AppRunner()
